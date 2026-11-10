@@ -1,0 +1,11 @@
+player_id,player_name,season,club,position,age_at_cutoff,minutes,goals,assists,feature_cutoff_date,reference_valuation_date,reference_eur
+fictional-001,Arlo Vale,2023/24,Cloudbridge FC,Forward,22,1800,12,4,2024-05-19,2024-06-01,10000000
+fictional-002,Bea Moss,2023/24,Copperfield United,Forward,25,2100,15,6,2024-05-19,2024-06-01,20000000
+fictional-003,Cato Reed,2023/24,Cloudbridge FC,Defender,28,2500,0,0,2024-05-19,2024-06-01,4000000
+fictional-004,Dara Fern,2023/24,Copperfield United,Defender,24,2300,1,2,2024-05-19,2024-06-01,8000000
+fictional-005,Ellis Finch,2023/24,Cloudbridge FC,Goalkeeper,30,3420,0,0,2024-05-19,2024-06-01,5000000
+fictional-001,Arlo Vale,2025/26,Cloudbridge FC,Forward,24,2400,18,5,2026-05-24,2026-06-10,18000000
+fictional-003,Cato Reed,2025/26,Cloudbridge FC,Defender,30,2200,0,0,2026-05-24,2026-06-10,5000000
+fictional-005,Ellis Finch,2025/26,Cloudbridge FC,Goalkeeper,32,3200,0,0,2026-05-24,2026-06-10,6000000
+fictional-006,Finn Brook,2025/26,Copperfield United,Midfielder,21,1500,3,4,2026-05-24,2026-06-10,9000000
+fictional-007,Gale Birch,2025/26,Copperfield United,Forward,19,0,0,0,2026-05-24,2026-06-10,2000000

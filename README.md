@@ -1,12 +1,15 @@
 # darwizzy-wirtzzy
 
-A small offline foundation for estimating historical football player values. Start
-with a median reference value for each broad position, fitted on earlier seasons,
-then evaluate it on a later season and look up an individual player-season.
+A small offline workflow for estimating historical football player values. Fit a
+median reference value for each broad position on earlier seasons, then evaluate
+it on a later season and look up an individual player-season. An optional Ridge
+model adds age and season totals for comparison; the position median stays the
+default.
 
 **Every player, club and valuation in the example is fictional.** The example
 demonstrates the workflow; its errors say nothing about real football accuracy.
-The program uses Python's standard library and makes no network requests.
+The default workflow uses Python's standard library. Model fitting and lookups
+make no network requests.
 
 ## Run locally
 
@@ -69,6 +72,58 @@ and have no timestamps. Age and season totals are validated for future models;
 this baseline uses only position and historical reference amounts.
 
 Reference valuations are estimates, not observed sale prices. Real-data source
-selection and provenance checks come before regression or a tester-facing app.
+selection and provenance checks come before fitting real rows or publishing an app.
 Keep credentials, provider responses, private audit reports and account records
 outside this repository. The ignore rules are a fallback, not a storage workflow.
+
+## Optional Ridge model
+
+The tested model setup is 64-bit Windows with CPython 3.15. Create a separate
+environment so the dependency-free setup stays available. These commands install
+the optional extra with the tested binary dependency versions:
+
+```powershell
+py -3.15 -m venv ..\darwizzy-model-venv
+..\darwizzy-model-venv\Scripts\python.exe -m pip install --only-binary=:all: --constraint requirements-model-win-py315.txt ".[model]"
+..\darwizzy-model-venv\Scripts\python.exe -m unittest discover -s tests -v
+```
+
+`requirements-model-win-py315.txt` pins the tested Windows/Python combination.
+Other supported interpreters can install `.[model]` in their own environment
+without that platform-specific constraint file. The optional dependency is
+scikit-learn; requesting Ridge without it prints an installation command and
+exits with code 2.
+
+Use the larger fictional example for Ridge, paired evaluation and lookup:
+
+```powershell
+..\darwizzy-model-venv\Scripts\python.exe -m darwizzy_wirtzzy evaluate --input examples/fictional_regression_seasons.csv --season 2025/26 --model ridge
+..\darwizzy-model-venv\Scripts\python.exe -m darwizzy_wirtzzy evaluate --input examples/fictional_regression_seasons.csv --season 2025/26 --compare
+..\darwizzy-model-venv\Scripts\python.exe -m darwizzy_wirtzzy lookup --input examples/fictional_regression_seasons.csv --season 2025/26 --player-id fictional-r08 --model ridge
+```
+
+The example has 12 eligible training rows from 2023/24 and 2024/25, followed by
+five 2025/26 holdout rows. Four can be scored; the fifth has zero minutes. Both
+models use the same four player-season keys. In the tested setup, paired MAE is
+EUR 5,250,000.00 for the median and EUR 3,120,508.18 for Ridge. The lookup returns
+EUR 33,531,090.00 against a EUR 36,000,000.00 reference dated 2026-06-10, a signed
+gap of EUR -2,468,910.00. These are fictional examples, not accuracy claims.
+
+Ridge uses age, minutes, goals, assists and broad position. A single pipeline
+scales numeric features and one-hot encodes position using training rows only,
+then fits `Ridge(alpha=1)` to the log of positive EUR references. Predictions are
+exponentiated and checked for finite, positive amounts representable in cents.
+IDs, names, clubs, dates and reference amounts never enter the feature matrix.
+The chronological split runs before preprocessing or model fitting, and holds
+out the requested season in full. The implementation follows scikit-learn's
+[pipeline and leakage guidance](https://scikit-learn.org/stable/common_pitfalls.html).
+
+Comparison reports paired keys, coverage, skipped reasons and MAE in EUR for
+each model. Zero-minute rows and positions without historical training are
+skipped by both models; lookups retain `zero_minutes` and
+`no_training_for_position`. A comparison with no eligible pair reports zero
+paired rows and null MAEs. Ridge requires at least two eligible historical rows
+to fit, which is only a computational minimum. It does not establish sufficient
+data for a useful real-world estimate. The initial alpha is fixed, and the
+holdout is for evaluation, not tuning. Estimators stay in memory; no model files
+or data exports are written.

@@ -49,7 +49,10 @@ class PlayerSeason:
 def _integer(value: str, field: str) -> int:
     if not re.fullmatch(r"[0-9]+", value):
         raise InputError(f"{field} must be a nonnegative integer")
-    return int(value)
+    try:
+        return int(value)
+    except ValueError as error:
+        raise InputError(f"{field} exceeds the supported integer range") from error
 
 
 def _date(value: str, field: str) -> date:
@@ -111,7 +114,8 @@ def money(value: Decimal) -> str:
     return format(value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP), ".2f")
 
 
-def fit(rows: list[PlayerSeason], evaluation_season: str) -> tuple[dict[str, Decimal], list[PlayerSeason], list[PlayerSeason]]:
+def split(rows: list[PlayerSeason], evaluation_season: str) -> tuple[list[PlayerSeason], list[PlayerSeason]]:
+    """Select historical labels available at the earliest holdout feature cutoff."""
     year = season_start(evaluation_season)
     holdout = [row for row in rows if row.season == evaluation_season]
     if not holdout:
@@ -121,6 +125,11 @@ def fit(rows: list[PlayerSeason], evaluation_season: str) -> tuple[dict[str, Dec
                 and row.reference_valuation_date <= available_at]
     if not training:
         raise InputError("No positive-minute training rows from earlier seasons with references available at the evaluation cutoff")
+    return sorted(training, key=lambda row: (row.season, row.player_id)), sorted(holdout, key=lambda row: row.player_id)
+
+
+def fit(rows: list[PlayerSeason], evaluation_season: str) -> tuple[dict[str, Decimal], list[PlayerSeason], list[PlayerSeason]]:
+    training, holdout = split(rows, evaluation_season)
     estimates = {position: median([row.reference_eur for row in training if row.position == position])
                  for position in sorted({row.position for row in training})}
     return estimates, training, holdout

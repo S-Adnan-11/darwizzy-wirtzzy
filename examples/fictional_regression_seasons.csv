@@ -1,0 +1,18 @@
+player_id,player_name,season,club,position,age_at_cutoff,minutes,goals,assists,feature_cutoff_date,reference_valuation_date,reference_eur
+fictional-r01,Aster Bay,2023/24,Paper Athletic,Goalkeeper,29,3200,0,0,2024-05-19,2024-06-01,4000000
+fictional-r02,Briar Cloud,2023/24,Ink Rovers,Goalkeeper,24,2800,0,0,2024-05-19,2024-06-01,7000000
+fictional-r03,Cedar Lake,2023/24,Paper Athletic,Defender,30,2500,1,1,2024-05-19,2024-06-01,5000000
+fictional-r04,Dune Reed,2023/24,Ink Rovers,Defender,22,2700,2,3,2024-05-19,2024-06-01,11000000
+fictional-r05,Ember Glen,2023/24,Paper Athletic,Midfielder,27,2300,4,6,2024-05-19,2024-06-01,12000000
+fictional-r06,Fern Cove,2023/24,Ink Rovers,Midfielder,21,2000,5,8,2024-05-19,2024-06-01,18000000
+fictional-r07,Grove Dawn,2023/24,Paper Athletic,Forward,28,2100,10,3,2024-05-19,2024-06-01,14000000
+fictional-r08,Hazel Stone,2023/24,Ink Rovers,Forward,23,2600,18,7,2024-05-19,2024-06-01,28000000
+fictional-r01,Aster Bay,2024/25,Paper Athletic,Goalkeeper,30,3000,0,0,2025-05-25,2025-06-05,3500000
+fictional-r04,Dune Reed,2024/25,Ink Rovers,Defender,23,2900,3,4,2025-05-25,2025-06-05,13000000
+fictional-r06,Fern Cove,2024/25,Ink Rovers,Midfielder,22,2400,7,9,2025-05-25,2025-06-05,22000000
+fictional-r08,Hazel Stone,2024/25,Ink Rovers,Forward,24,2800,21,8,2025-05-25,2025-06-05,32000000
+fictional-r01,Aster Bay,2025/26,Paper Athletic,Goalkeeper,31,3100,0,0,2026-05-24,2026-06-10,3000000
+fictional-r04,Dune Reed,2025/26,Ink Rovers,Defender,24,3000,2,5,2026-05-24,2026-06-10,15000000
+fictional-r06,Fern Cove,2025/26,Ink Rovers,Midfielder,23,2700,9,10,2026-05-24,2026-06-10,26000000
+fictional-r08,Hazel Stone,2025/26,Ink Rovers,Forward,25,2900,24,9,2026-05-24,2026-06-10,36000000
+fictional-r09,Iris Frost,2025/26,Paper Athletic,Forward,19,0,0,0,2026-05-24,2026-06-10,2000000

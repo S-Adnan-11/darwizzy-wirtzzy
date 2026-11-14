@@ -9,6 +9,9 @@ description = "An offline foundation for historical football player valuation ex
 requires-python = ">=3.11"
 dependencies = []
 
+[project.optional-dependencies]
+model = ["scikit-learn>=1.7,<2"]
+
 [project.scripts]
 darwizzy-wirtzzy = "darwizzy_wirtzzy.cli:main"
 

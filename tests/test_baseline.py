@@ -161,6 +161,11 @@ class BaselineTests(unittest.TestCase):
         with self.assertRaisesRegex(InputError, "No holdout"):
             evaluate(rows, "2022/23")
 
+    def test_integer_digit_limit_has_a_csv_error(self):
+        self.records[0]["minutes"] = "9" * 10000
+        with self.assertRaisesRegex(InputError, "CSV line 2.*integer range"):
+            self.rows()
+
     def test_deterministic_with_reordered_input(self):
         expected = evaluate(self.rows(), "2023/24")
         self.records.reverse()

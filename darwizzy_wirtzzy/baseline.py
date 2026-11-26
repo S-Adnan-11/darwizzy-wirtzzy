@@ -3,7 +3,7 @@
 import csv
 from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP, localcontext
 from pathlib import Path
 import re
 from statistics import median
@@ -135,10 +135,26 @@ def fit(rows: list[PlayerSeason], evaluation_season: str) -> tuple[dict[str, Dec
     return estimates, training, holdout
 
 
+def error_metrics(scored: list[PlayerSeason], estimates: dict[tuple[str, str], Decimal]) -> dict:
+    """Summarize unrounded estimates; signed error is estimate minus reference."""
+    names = ("mean_absolute_error_eur", "median_absolute_error_eur", "mean_signed_error_eur")
+    if not scored:
+        return dict.fromkeys(names)
+    with localcontext() as context:
+        context.prec = 330  # Preserve finite Ridge estimates through EUR-cent formatting.
+        signed = [estimates[(row.player_id, row.season)] - row.reference_eur for row in scored]
+        absolute = [abs(error) for error in signed]
+        return {
+            "mean_absolute_error_eur": money(sum(absolute) / len(absolute)),
+            "median_absolute_error_eur": money(median(absolute)),
+            "mean_signed_error_eur": money(sum(signed) / len(signed)),
+        }
+
+
 def evaluate(rows: list[PlayerSeason], evaluation_season: str) -> dict:
     estimates, training, holdout = fit(rows, evaluation_season)
     scored = [row for row in holdout if row.minutes > 0 and row.position in estimates]
-    errors = [abs(estimates[row.position] - row.reference_eur) for row in scored]
+    predictions = {(row.player_id, row.season): estimates[row.position] for row in scored}
     return {
         "evaluation_season": evaluation_season,
         "training_seasons": sorted({row.season for row in training}),
@@ -149,7 +165,7 @@ def evaluate(rows: list[PlayerSeason], evaluation_season: str) -> dict:
         "skipped_unseen_position": sum(row.minutes > 0 and row.position not in estimates for row in holdout),
         "positions_without_training": sorted({row.position for row in holdout} - estimates.keys()),
         "position_medians_eur": {position: money(value) for position, value in estimates.items()},
-        "mean_absolute_error_eur": money(sum(errors) / len(errors)) if errors else None,
+        **error_metrics(scored, predictions),
     }
 
 

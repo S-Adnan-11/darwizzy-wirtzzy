@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from decimal import Decimal, localcontext
 import math
 
-from .baseline import InputError, PlayerSeason, fit as fit_median, money, season_start, split
+from .baseline import InputError, PlayerSeason, error_metrics, fit as fit_median, money, season_start, split
 
 FEATURES = ("age_at_cutoff", "minutes", "goals", "assists", "position")
 ALPHA = 1.0
@@ -100,15 +100,6 @@ def _coverage(training: list[PlayerSeason], holdout: list[PlayerSeason], season:
     }
 
 
-def _mae(scored: list[PlayerSeason], estimates: dict[tuple[str, str], Decimal]) -> str | None:
-    if not scored:
-        return None
-    with localcontext() as context:
-        context.prec = 330  # Accommodate the full finite float range at EUR cents.
-        errors = [abs(estimates[(row.player_id, row.season)] - row.reference_eur) for row in scored]
-        return money(sum(errors) / len(errors))
-
-
 def evaluate(rows: list[PlayerSeason], season: str) -> dict:
     training, holdout = split(rows, season)
     model = fit_training(training)
@@ -119,7 +110,7 @@ def evaluate(rows: list[PlayerSeason], season: str) -> dict:
         "model": "ridge", "ridge_alpha": ALPHA,
         "features": list(FEATURES), "target": "log_reference_eur",
         "evaluated_row_count": len(scored),
-        "mean_absolute_error_eur": _mae(scored, estimates),
+        **error_metrics(scored, estimates),
     }
 
 
@@ -142,9 +133,9 @@ def compare(rows: list[PlayerSeason], season: str) -> dict:
         },
         "models": {
             "median": {"eligible_row_count": len(median_estimates), "paired_row_count": len(paired),
-                       "mean_absolute_error_eur": _mae(paired, median_estimates)},
+                       **error_metrics(paired, median_estimates)},
             "ridge": {"eligible_row_count": len(ridge_estimates), "paired_row_count": len(paired),
-                      "mean_absolute_error_eur": _mae(paired, ridge_estimates), "alpha": ALPHA},
+                      **error_metrics(paired, ridge_estimates), "alpha": ALPHA},
         },
     }
 

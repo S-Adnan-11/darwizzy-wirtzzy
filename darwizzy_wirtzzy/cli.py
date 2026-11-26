@@ -2,10 +2,10 @@
 
 import argparse
 import csv
-import json
 import sys
 
 from .baseline import InputError, evaluate, load_csv, lookup
+from .output import encode_result
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -16,6 +16,8 @@ def main(argv: list[str] | None = None) -> int:
         command.add_argument("--input", required=True, help="Player-season CSV path")
         command.add_argument("--season", required=True, help="Held-out season in YYYY/YY format")
         command.add_argument("--model", choices=("median", "ridge"), default="median", help="Estimator; Ridge needs the model extra")
+        command.add_argument("--format", choices=("legacy", "json"), default="legacy",
+                             help="Output contract: original unversioned JSON (default), or versioned JSON")
         if action == "evaluate":
             command.add_argument("--compare", action="store_true", help="Compare median and Ridge on the same holdout keys")
         if action == "lookup":
@@ -33,8 +35,9 @@ def main(argv: list[str] | None = None) -> int:
                 result = regression.compare(rows, args.season) if args.compare else regression.evaluate(rows, args.season)
         else:
             result = evaluate(rows, args.season) if args.action == "evaluate" else lookup(rows, args.player_id, args.season)
+        output = encode_result(result, args.action, args.model, args.format)
     except (InputError, OSError, UnicodeError, csv.Error) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
-    print(json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False))
+    print(output)
     return 0

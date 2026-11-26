@@ -38,6 +38,95 @@ A missing player-season prints a useful error to stderr and exits with code 2:
 python -m darwizzy_wirtzzy lookup --input examples/fictional_player_seasons.csv --season 2025/26 --player-id missing
 ```
 
+## Versioned JSON output
+
+The existing default output is unversioned, pretty-printed JSON. It remains
+unchanged; `--format legacy` selects it explicitly. Use `--format json` for the
+versioned contract on either command:
+
+```powershell
+python -m darwizzy_wirtzzy evaluate --input examples/fictional_player_seasons.csv --season 2025/26 --format json
+python -m darwizzy_wirtzzy lookup --input examples/fictional_player_seasons.csv --season 2025/26 --player-id fictional-001 --format json
+```
+
+Each successful invocation writes one compact JSON object followed by a newline.
+All objects have `schema_version: 1`, `command` (`evaluate` or `lookup`),
+`currency: "EUR"`, and `model` (`median`, `ridge`, or `comparison`). Keys and
+model ordering are deterministic. Unicode and special characters are JSON-escaped
+and decode to the original text. NaN and Infinity are rejected. Errors keep
+stdout empty, write the actionable message to stderr and exit with code 2;
+`--help` retains the usual CLI behavior.
+
+Lookup adds the same identity and status fields as the existing lookup, with ISO
+reference dates and nullable estimates/gaps. The fictional lookup above returns:
+
+```json
+{
+  "schema_version": 1,
+  "command": "lookup",
+  "currency": "EUR",
+  "model": "median",
+  "player_id": "fictional-001",
+  "player_name": "Arlo Vale",
+  "season": "2025/26",
+  "club": "Cloudbridge FC",
+  "position": "Forward",
+  "status": "ok",
+  "estimate_eur": "15000000.00",
+  "reference_eur": "18000000.00",
+  "reference_valuation_date": "2026-06-10",
+  "signed_gap_eur": "-3000000.00"
+}
+```
+
+All EUR amounts are decimal strings, rounded to cents using half-up rounding.
+Signed gap and signed error mean **estimate minus reference**. Aggregate metrics
+use unrounded predictions and errors before the final formatting.
+
+Evaluation retains its season, training seasons, coverage and skipped fields,
+and adds the following fields. Counts describe only the validated CSV passed to
+the command; they do not count players absent from that input.
+
+| Field | Meaning |
+| --- | --- |
+| `evaluation_season` | Requested held-out season |
+| `training_row_count` | Historical rows actually used after the existing positive-minute and label-availability rules |
+| `holdout_row_count` | All validated rows for the requested season, including zero minutes and unsupported roles |
+| `eligible_evaluation_row_count` | Positive-minute holdout rows with a position supported by training; holdout minus both skipped counts |
+| `scored_row_count` | Rows actually scored; comparison uses only the common paired keys |
+| `skipped_zero_minutes`, `skipped_unseen_position`, `positions_without_training` | Existing coverage diagnostics; no replacement estimate is invented |
+| `models.<model>.eligible_row_count` | Predictions available from that model under its existing eligibility rules |
+| `models.<model>.scored_row_count` | Predictions included in that model's reported metrics |
+| `models.<model>.mean_absolute_error_eur` | Mean absolute error, or null when no rows are scored |
+| `models.<model>.median_absolute_error_eur` | Median absolute error, or null when no rows are scored |
+| `models.<model>.mean_signed_error_eur` | Mean signed error, or null when no rows are scored |
+
+For a single model, `evaluated_row_count` is also retained and `models` contains
+only that model. Median evaluation retains `position_medians_eur`; Ridge retains
+`ridge_alpha`, `features` and `target`. These options require the existing model
+extra and use its unchanged predictions:
+
+```powershell
+python -m darwizzy_wirtzzy evaluate --input examples/fictional_regression_seasons.csv --season 2025/26 --model ridge --format json
+python -m darwizzy_wirtzzy evaluate --input examples/fictional_regression_seasons.csv --season 2025/26 --compare --format json
+python -m darwizzy_wirtzzy lookup --input examples/fictional_regression_seasons.csv --season 2025/26 --player-id fictional-r08 --model ridge --format json
+```
+
+Comparison sets `model` to `comparison`, retains `paired_row_count`,
+`paired_player_seasons` (objects with `player_id` and `season`) and
+`skipped_reasons`, and reports `models.median` before `models.ridge`. Both models
+score exactly those paired keys. Each model also retains `paired_row_count`,
+and Ridge retains `alpha`. A model's available prediction count can exceed the
+paired count; its comparison metrics still use only the paired rows.
+
+Parse the dependency-free fictional evaluation directly in PowerShell:
+
+```powershell
+$result = python -m darwizzy_wirtzzy evaluate --input examples/fictional_player_seasons.csv --season 2025/26 --format json | ConvertFrom-Json
+$result.schema_version  # 1
+$result.models.median.mean_absolute_error_eur  # 1666666.67
+```
+
 ## CSV contract
 
 The CSV header must contain exactly these fields. Each field is required.
